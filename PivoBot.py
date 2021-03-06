@@ -211,7 +211,7 @@ async def queue(ctx, url: str):
             add_queue = False
             queues[q_num] = q_num
 
-    queue_path = os.path.abspath(os.path.realpath("Queue") + f"\song{q_num}.%(ext)s")
+    queue_path = os.path.abspath(os.path.realpath("Queue") + f"/song{q_num}.%(ext)s")
 
     ydl_opts = {
         'format': 'bestaudio/best',
