@@ -11,6 +11,9 @@ import asyncio
 import requests
 
 print ("Введите токен:")
+
+used_users = []
+
 TOKEN = input()
 BOT_PREFIX = 'p!'
 
@@ -21,6 +24,7 @@ bot.remove_command('help')
 async def on_ready():
     print("Залогинен как: " + bot.user.name)
     print(f"----------\n")
+    
 #--------------------------------------------------------------------
 @bot.command(pass_context=True, aliases=['l'])
 async def leave(ctx):
@@ -146,6 +150,45 @@ async def play(ctx, url: str):
     await ctx.send(f"Проигрывается: {nname[0]}")
     print("Трек проигрывается\n")
 
+    if voice and voice.play(discord.FFmpegPCMAudio("song.mp3"), after=lambda e: check_queue()):
+        try:
+            if not os.path.isdir("./Queue"):
+                os.mkdir("Queue")
+            DIR = os.path.abspath(os.path.realpath("Queue"))
+            q_num = len(os.listdir(DIR))
+            q_num += 1
+            add_queue = True
+            while add_queue:
+                if q_num in queues:
+                    q_num += 1
+                else:
+                    add_queue = False
+                    queues[q_num] = q_num
+
+            queue_path = os.path.abspath(os.path.realpath("Queue") + f"/song{q_num}.%(ext)s")
+
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'quiet': True,
+                'outtmpl': queue_path,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+            }
+
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                print("Скачивание аудио\n")
+                ydl.download([url])
+            await ctx.send("Добавлен трек " + str(q_num) + " в очередь")
+
+            print("Добавлен трек в очередь\n")
+        except:
+            print ("Произошёл взлом жёпы")
+            await ctx.send ("Произошёл взлом жёпы")
+            return
+
 
 @bot.command(pass_context=True, aliases=['pau'])
 async def pause(ctx):
@@ -196,6 +239,7 @@ async def stop(ctx):
 
 queues = {}
 
+#Очередь блять.--------------------------------------------------------------------------
 @bot.command(pass_context=True, aliases=['q'])
 async def queue(ctx, url: str):
     if not os.path.isdir("./Queue"):
@@ -231,7 +275,6 @@ async def queue(ctx, url: str):
 
     print("Добавлен трек в очередь\n")
 
-#-------------------------------------------------------------
 @bot.command(pass_context=True, aliases=['s'])
 async def skip(ctx):
     voice = get(bot.voice_clients, guild=ctx.guild)
@@ -277,12 +320,6 @@ async def avatar(ctx, *, member: discord.Member=None):
 async def howgay(ctx):
     y = randint(1, 101)
     await ctx.send("Ты гей на " + str(y) + "% :rainbow_flag:")
-
-#-----------------------------------------------------------------------
-@bot.command()
-async def pivo(ctx):
-    await ctx.send("Получи своё цифровое пиво в ебало и свали нахер :beer: :heart:")
-
 
 #------------------------------------------------------------------------
 @bot.command(pass_context=True)
